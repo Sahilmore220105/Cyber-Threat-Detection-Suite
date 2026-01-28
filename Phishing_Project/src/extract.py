@@ -13,3 +13,4 @@ def get_features(url):
         'IsHTTPS': 1 if url.startswith('https') else 0
     }
     return pd.DataFrame([features])
+    
