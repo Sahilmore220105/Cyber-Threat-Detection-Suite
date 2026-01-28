@@ -3,18 +3,16 @@ import joblib
 import os
 import pandas as pd
 import re
-import tldextract
 
-# --- STEP 1: FIX IMPORTS ---
-# We try to import from 'extract.py' directly. 
-# If that fails, we try 'src.extract'.
+# --- 1. SAFE FEATURE EXTRACTION IMPORT ---
+# This ensures the app doesn't crash if 'src' folder is missing
 try:
     from extract import get_features
 except ImportError:
     try:
         from src.extract import get_features
     except ImportError:
-        # Fallback: Define the function here if the file is missing
+        # Emergency fallback logic if extract.py is missing entirely
         def get_features(url):
             features = {
                 'URLLength': len(url),
@@ -24,45 +22,54 @@ except ImportError:
             }
             return pd.DataFrame([features])
 
-# --- STEP 2: FIX MODEL PATH ---
-# This looks for the model in the current folder OR a 'models' subfolder
+# --- 2. SAFE MODEL LOADING ---
+# Checks both root and 'models/' folder
 MODEL_NAME = "phishing_model.pkl"
+model_path = None
+
 if os.path.exists(MODEL_NAME):
     model_path = MODEL_NAME
 elif os.path.exists(os.path.join("models", MODEL_NAME)):
     model_path = os.path.join("models", MODEL_NAME)
-else:
-    model_path = None
 
+# --- 3. STREAMLIT UI ---
 st.set_page_config(page_title="SOC Mini-Tool", page_icon="🛡️")
 
 st.title("🛡️ Phishing URL Detector")
+st.info("This tool uses Machine Learning to analyze URL patterns for potential threats.")
 
 if model_path is None:
-    st.error(f"❌ Could not find {MODEL_NAME}. Please make sure the file is uploaded to your GitHub repository.")
+    st.error(f"❌ Model file '{MODEL_NAME}' not found! Please ensure it is uploaded to GitHub.")
 else:
-    try:
-        model = joblib.load(model_path)
-        
-        url_input = st.text_input("Enter URL to scan:", placeholder="https://secure-update-paypal.com")
+    # Load the model once
+    model = joblib.load(model_path)
+    
+    url_input = st.text_input("Enter URL to scan:", placeholder="https://secure-update-paypal.com")
 
-        if st.button("Run Security Analysis"):
-            if url_input:
-                # Extract features
+    if st.button("Run Security Analysis"):
+        if url_input:
+            try:
+                # 1. Extract features
                 features_df = get_features(url_input)
                 
-                # Match the 4 features your model was trained on
+                # 2. Match the 4 features used during training
                 training_features = ['URLLength', 'NoOfLettersInURL', 'NoOfDegitsInURL', 'NoOfOtherSpecialCharsInURL']
                 input_data = features_df[training_features]
                 
-                # Prediction
+                # 3. Prediction
                 prediction = model.predict(input_data)[0]
                 probability = model.predict_proba(input_data)[0][1]
 
+                # 4. Results UI
                 st.subheader("Analysis Result")
                 if prediction == 1:
                     st.error(f"🚨 PHISHING DETECTED! Confidence: {probability*100:.1f}%")
+                    st.warning("Suspicious Factors: Unusual character count or URL structure.")
                 else:
                     st.success(f"✅ LEGITIMATE. Confidence: {(1-probability)*100:.1f}%")
-    except Exception as e:
-        st.error(f"An error occurred: {e}")
+                    st.info("This URL follows common patterns for safe websites.")
+            
+            except Exception as e:
+                st.error(f"Analysis failed: {e}")
+        else:
+            st.warning("Please enter a URL to analyze.")
