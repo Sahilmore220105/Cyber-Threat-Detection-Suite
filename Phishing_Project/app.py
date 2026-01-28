@@ -13,7 +13,11 @@ st.info("This tool uses Machine Learning to analyze URL patterns for potential t
 
 # Check if model exists
 if not os.path.exists(MODEL_PATH):
-    st.error("Model file not found! Please run 'python src/train.py' first.")
+    st.error(f"❌ Model file not found at: {os.path.abspath(MODEL_PATH)}")
+    st.warning("To fix this issue:")
+    st.write("1. Train the model locally: `python src/train.py`")
+    st.write("2. Commit the `models/phishing_model.pkl` file to your GitHub repository")
+    st.write("3. Redeploy the app on Streamlit Community Cloud")
 else:
     model = joblib.load(MODEL_PATH)
     
