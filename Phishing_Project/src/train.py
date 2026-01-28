@@ -6,7 +6,7 @@ import os
 
 # Paths
 DATA_PATH = "data/PhiUSIIL_Phishing_URL_Dataset.csv"
-MODEL_PATH = "models/phishing_model.pkl"
+MODEL_PATH = "python src/models/phishing_model.pkl"
 
 def train_model():
     print("📥 Loading dataset...")
