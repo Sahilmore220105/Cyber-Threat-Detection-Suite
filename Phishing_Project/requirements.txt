@@ -1,6 +1,5 @@
-pandas>=1.4.0
-scikit-learn>=1.0.0
-joblib>=1.1.0
-streamlit>=1.28.0
-tldextract>=3.0.0
-altair>=5.0.0,<6.0.0
+streamlit
+joblib
+pandas
+scikit-learn
+tldextract
